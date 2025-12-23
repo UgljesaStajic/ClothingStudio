@@ -58,7 +58,7 @@ export function MannequinViewer3D({ images }: MannequinViewer3DProps) {
     directionalLight2.position.set(-5, -5, -5);
     scene.add(directionalLight2);
 
-    // Create mannequin geometry (cylinder-based body)
+    // Create mannequin geometry using planes in 3D space
     const mannequinGroup = new THREE.Group();
 
     // Load textures from generated images
@@ -77,6 +77,8 @@ export function MannequinViewer3D({ images }: MannequinViewer3DProps) {
             (tex) => {
               tex.wrapS = THREE.ClampToEdgeWrapping;
               tex.wrapT = THREE.ClampToEdgeWrapping;
+              tex.minFilter = THREE.LinearFilter;
+              tex.magFilter = THREE.LinearFilter;
               resolve(tex);
             },
             undefined,
@@ -90,51 +92,79 @@ export function MannequinViewer3D({ images }: MannequinViewer3DProps) {
       }
     }
 
-    // Create body (main cylinder)
-    const bodyGeometry = new THREE.CylinderGeometry(0.8, 0.9, 3, 32);
-    const bodyMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      map: textures['front'] || null,
-      side: THREE.DoubleSide,
-    });
-    const bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    mannequinGroup.add(bodyMesh);
+    // Create a realistic mannequin shape using multiple connected planes
+    // The AI-generated images already show the invisible mannequin effect
+    // We arrange them in 3D space to create a volumetric appearance
 
-    // If we have multiple angle textures, create multiple faces
+    const planeWidth = 1.5;
+    const planeHeight = 4;
+
+    // Front face
+    if (textures['front']) {
+      const frontGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+      const frontMaterial = new THREE.MeshStandardMaterial({
+        map: textures['front'],
+        transparent: true,
+        side: THREE.FrontSide,
+      });
+      const frontMesh = new THREE.Mesh(frontGeometry, frontMaterial);
+      frontMesh.position.z = 0.4;
+      mannequinGroup.add(frontMesh);
+    }
+
+    // Back face
     if (textures['back']) {
-      // Create back face plane
-      const backPlane = new THREE.PlaneGeometry(1.6, 3);
+      const backGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
       const backMaterial = new THREE.MeshStandardMaterial({
         map: textures['back'],
-        side: THREE.DoubleSide,
+        transparent: true,
+        side: THREE.FrontSide,
       });
-      const backMesh = new THREE.Mesh(backPlane, backMaterial);
-      backMesh.position.z = -0.9;
+      const backMesh = new THREE.Mesh(backGeometry, backMaterial);
+      backMesh.position.z = -0.4;
+      backMesh.rotation.y = Math.PI;
       mannequinGroup.add(backMesh);
     }
 
+    // Left side
     if (textures['left_side'] || textures['left_sleeve']) {
-      const leftPlane = new THREE.PlaneGeometry(1.8, 3);
+      const leftGeometry = new THREE.PlaneGeometry(0.8, planeHeight);
       const leftMaterial = new THREE.MeshStandardMaterial({
         map: textures['left_side'] || textures['left_sleeve'],
+        transparent: true,
         side: THREE.DoubleSide,
       });
-      const leftMesh = new THREE.Mesh(leftPlane, leftMaterial);
+      const leftMesh = new THREE.Mesh(leftGeometry, leftMaterial);
+      leftMesh.position.x = -0.75;
       leftMesh.rotation.y = Math.PI / 2;
-      leftMesh.position.x = -0.9;
       mannequinGroup.add(leftMesh);
     }
 
+    // Right side
     if (textures['right_side'] || textures['right_sleeve']) {
-      const rightPlane = new THREE.PlaneGeometry(1.8, 3);
+      const rightGeometry = new THREE.PlaneGeometry(0.8, planeHeight);
       const rightMaterial = new THREE.MeshStandardMaterial({
         map: textures['right_side'] || textures['right_sleeve'],
+        transparent: true,
         side: THREE.DoubleSide,
       });
-      const rightMesh = new THREE.Mesh(rightPlane, rightMaterial);
+      const rightMesh = new THREE.Mesh(rightGeometry, rightMaterial);
+      rightMesh.position.x = 0.75;
       rightMesh.rotation.y = -Math.PI / 2;
-      rightMesh.position.x = 0.9;
       mannequinGroup.add(rightMesh);
+    }
+
+    // If only front image is available, create a card-like display
+    if (images.length === 1 && textures['front']) {
+      mannequinGroup.clear();
+      const singleGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+      const singleMaterial = new THREE.MeshStandardMaterial({
+        map: textures['front'],
+        transparent: true,
+        side: THREE.DoubleSide,
+      });
+      const singleMesh = new THREE.Mesh(singleGeometry, singleMaterial);
+      mannequinGroup.add(singleMesh);
     }
 
     scene.add(mannequinGroup);
