@@ -7,6 +7,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/layout/Screen';
 import { Button } from '@/components/ui/Button';
+import { MannequinViewer3D } from '@/components/MannequinViewer3D';
 import { useClothing } from '@/hooks/useClothing';
 import { useAlert } from '@/template';
 import { colors, typography, spacing, borderRadius } from '@/constants/theme';
@@ -98,23 +99,32 @@ export default function ResultsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {selectedImage && (
-          <View style={styles.mainImageContainer}>
-            <Image source={{ uri: selectedImage.image_url }} style={styles.mainImage} contentFit="contain" />
-            <View style={styles.imageActions}>
-              <Pressable
-                onPress={handleDownload}
-                style={[styles.actionButton, { backgroundColor: theme.primary }]}
-              >
-                <Ionicons name="download" size={24} color={theme.white} />
-              </Pressable>
-              <Pressable
-                onPress={handleShare}
-                style={[styles.actionButton, { backgroundColor: theme.primary }]}
-              >
-                <Ionicons name="share-social" size={24} color={theme.white} />
-              </Pressable>
+        <View style={styles.viewer3DContainer}>
+          <View style={[styles.viewer3DCard, { backgroundColor: theme.surface }]}>
+            <MannequinViewer3D images={images} />
+            <View style={styles.instructionBadge}>
+              <Ionicons name="hand-left-outline" size={16} color={theme.white} />
+              <Text style={styles.instructionText}>Drag to rotate</Text>
             </View>
+          </View>
+        </View>
+
+        {selectedImage && (
+          <View style={styles.imageActions}>
+            <Pressable
+              onPress={handleDownload}
+              style={[styles.actionButton, { backgroundColor: theme.primary }]}
+            >
+              <Ionicons name="download" size={24} color={theme.white} />
+              <Text style={[styles.actionButtonText, { color: theme.white }]}>Download</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleShare}
+              style={[styles.actionButton, { backgroundColor: theme.primary }]}
+            >
+              <Ionicons name="share-social" size={24} color={theme.white} />
+              <Text style={[styles.actionButtonText, { color: theme.white }]}>Share</Text>
+            </Pressable>
           </View>
         )}
 
@@ -169,29 +179,54 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  mainImageContainer: {
-    position: 'relative',
+  viewer3DContainer: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.lg,
   },
-  mainImage: {
-    width: '100%',
-    aspectRatio: 3 / 4,
-    borderRadius: borderRadius.md,
+  viewer3DCard: {
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  instructionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    marginTop: spacing.md,
+    alignSelf: 'center',
+  },
+  instructionText: {
+    color: '#fff',
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.medium,
   },
   imageActions: {
-    position: 'absolute',
-    bottom: spacing.md,
-    right: spacing.lg + spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   actionButton: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.full,
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: spacing.sm,
+  },
+  actionButtonText: {
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.semibold,
   },
   thumbnailsContainer: {
     paddingHorizontal: spacing.lg,
