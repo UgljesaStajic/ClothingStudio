@@ -28,12 +28,18 @@ export default function ResultsScreen() {
   }, []);
 
   const loadImages = async () => {
+    console.log('Loading images for itemId:', params.itemId);
     const result = await getGeneratedImages(params.itemId);
+    console.log('Images loaded:', result);
     if (result.data) {
+      console.log('Number of images:', result.data.length);
       setImages(result.data);
       if (result.data.length > 0) {
         setSelectedImage(result.data[0]);
       }
+    } else if (result.error) {
+      console.error('Error loading images:', result.error);
+      showAlert('Error', result.error);
     }
   };
 
@@ -100,6 +106,7 @@ export default function ResultsScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.viewer3DContainer}>
+          <Text style={[styles.debugText, { color: theme.textSecondary }]}>Images count: {images.length}</Text>
           <View style={[styles.viewer3DCard, { backgroundColor: theme.surface }]}>
             <MannequinViewer3D images={images} />
             <View style={styles.instructionBadge}>
@@ -268,5 +275,9 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: typography.fontSize.lg,
+  },
+  debugText: {
+    fontSize: typography.fontSize.sm,
+    marginBottom: spacing.sm,
   },
 });

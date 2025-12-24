@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, useColorScheme, Text } from 'react-native';
 import { Image } from 'expo-image';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -27,12 +27,20 @@ export function MannequinViewer3D({ images }: MannequinViewer3DProps) {
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const update = () => setDimensions(Dimensions.get('window'));
     update();
     const sub = Dimensions.addEventListener('change', update);
     return () => sub?.remove();
   }, []);
+
+  useEffect(() => {
+    console.log('MannequinViewer3D - Images received:', images.length);
+    if (images.length > 0) {
+      console.log('First image:', images[0]);
+      updateCurrentImage(0);
+    }
+  }, [images]);
 
   // Update current image based on rotation
   const updateCurrentImage = (rotationValue: number) => {
@@ -129,11 +137,10 @@ export function MannequinViewer3D({ images }: MannequinViewer3DProps) {
     };
   });
 
-  React.useEffect(() => {
-    updateCurrentImage(0);
-  }, [images]);
+
 
   if (images.length === 0) {
+    console.log('MannequinViewer3D - No images, showing empty state');
     return (
       <View style={[styles.container, { height: viewHeight, backgroundColor: theme.surface }]}>
         <View style={styles.emptyState}>
@@ -143,27 +150,42 @@ export function MannequinViewer3D({ images }: MannequinViewer3DProps) {
     );
   }
 
+  console.log('MannequinViewer3D - Rendering with currentImageIndex:', currentImageIndex);
+  console.log('MannequinViewer3D - Current image:', currentImage);
+
   return (
-    <View style={[styles.container, { height: viewHeight }]}>
+    <View style={[styles.container, { height: viewHeight, backgroundColor: theme.backgroundSecondary }]}>
       <GestureDetector gesture={composedGesture}>
         <Animated.View style={[styles.viewer, { width: viewWidth, height: viewHeight }, animatedStyle]}>
-          <Image
-            source={{ uri: currentImage.image_url }}
-            style={styles.imageLayer}
-            contentFit="contain"
-            recyclingKey={currentImage.id}
-            cachePolicy="memory-disk"
-          />
-          <Animated.View style={[styles.rotationIndicator, rotationIndicatorStyle]}>
-            <View style={[styles.rotationDot, { backgroundColor: theme.primary }]} />
-          </Animated.View>
+          {currentImage ? (
+            <>
+              <Image
+                source={{ uri: currentImage.image_url }}
+                style={styles.imageLayer}
+                contentFit="contain"
+                recyclingKey={currentImage.id}
+                cachePolicy="memory-disk"
+                onError={(error) => console.log('Image load error:', error)}
+                onLoad={() => console.log('Image loaded successfully:', currentImage.angle)}
+              />
+              <Animated.View style={[styles.rotationIndicator, rotationIndicatorStyle]}>
+                <View style={[styles.rotationDot, { backgroundColor: theme.primary }]} />
+              </Animated.View>
+            </>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={{ color: theme.textSecondary }}>Loading...</Text>
+            </View>
+          )}
         </Animated.View>
       </GestureDetector>
-      <View style={styles.angleIndicator}>
-        <Text style={[styles.angleText, { color: theme.text }]}>
-          {currentImage.angle.replace('_', ' ').toUpperCase()}
-        </Text>
-      </View>
+      {currentImage && (
+        <View style={styles.angleIndicator}>
+          <Text style={[styles.angleText, { color: theme.text }]}>
+            {currentImage.angle.replace('_', ' ').toUpperCase()}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
